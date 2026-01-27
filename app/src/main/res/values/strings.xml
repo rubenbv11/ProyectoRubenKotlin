@@ -2,5 +2,6 @@
     <string name="app_name">ProyectoRuben</string>
     <string name="pantalla_perfil">Perfil</string>
     <string name="pantalla_reservar">Reservar</string>
-    <string name="pantalla_lista">Anteriores Reservas</string>
+    <string name="pantalla_lista">Historico</string>
+    <string name="pantalla_productos">Catalogo</string>
 </resources>

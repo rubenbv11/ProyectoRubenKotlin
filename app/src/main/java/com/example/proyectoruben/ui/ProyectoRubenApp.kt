@@ -7,10 +7,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.outlined.DateRange
-import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -29,6 +30,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.proyectoruben.R
 import com.example.proyectoruben.modelo.Ruta
+import com.example.proyectoruben.ui.pantallas.Catalogo
 import com.example.proyectoruben.ui.pantallas.ListarReservar
 import com.example.proyectoruben.ui.pantallas.Perfil
 import com.example.proyectoruben.ui.pantallas.Reservar
@@ -36,19 +38,17 @@ import com.example.proyectoruben.ui.pantallas.Reservar
 enum class Pantallas(@StringRes val titulo: Int){
     Perfil(titulo = R.string.pantalla_perfil),
     Reservar(titulo = R.string.pantalla_reservar),
-    ListarReservas(titulo = R.string.pantalla_lista)
+    ListarReservas(titulo = R.string.pantalla_lista),
+
+    Catalogo(titulo =  R.string.pantalla_productos)
 }
 
 
 val listaRutas = listOf(
-    Ruta(
-        Pantallas.Perfil.titulo,
-        Pantallas.Perfil.name,
-        Icons.Filled.Person,
-        Icons.Outlined.Person
-    ),
+    Ruta(Pantallas.Perfil.titulo, Pantallas.Perfil.name, Icons.Filled.Person, Icons.Outlined.Person),
     Ruta(Pantallas.Reservar.titulo, Pantallas.Reservar.name, Icons.Filled.Favorite, Icons.Outlined.FavoriteBorder),
-    Ruta(Pantallas.ListarReservas.titulo, Pantallas.ListarReservas.name, Icons.Filled.DateRange, Icons.Outlined.DateRange)
+    Ruta(Pantallas.ListarReservas.titulo, Pantallas.ListarReservas.name, Icons.Filled.DateRange, Icons.Outlined.DateRange),
+    Ruta(Pantallas.Catalogo.titulo, Pantallas.Catalogo.name, Icons.Filled.ShoppingCart, Icons.Outlined.ShoppingCart)
 )
 
 
@@ -108,6 +108,13 @@ fun ProyectoRubenApp(
 
             composable(route = Pantallas.ListarReservas.name) {
                 ListarReservar(
+                    modifier = Modifier
+                        .fillMaxSize()
+                )
+            }
+
+            composable (route = Pantallas.Catalogo.name){
+                Catalogo(
                     modifier = Modifier
                         .fillMaxSize()
                 )
