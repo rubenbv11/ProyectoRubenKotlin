@@ -64,4 +64,5 @@ dependencies {
     implementation(libs.jetbrains.kotlinx.serialization)
     implementation(libs.jakewharton.retrofit)
     implementation(libs.squareup.okhttp3)
+    implementation("androidx.compose.material:material-icons-extended:1.6.0")
 }
