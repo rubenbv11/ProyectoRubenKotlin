@@ -6,24 +6,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.ShoppingCart
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -37,6 +28,8 @@ import com.example.proyectoruben.ui.pantallas.Catalogo
 import com.example.proyectoruben.ui.pantallas.ListarReservar
 import com.example.proyectoruben.ui.pantallas.Perfil
 import com.example.proyectoruben.ui.pantallas.Reservar
+import com.example.proyectoruben.viewmodel.AuthViewModel
+import com.example.proyectoruben.viewmodel.HistorialViewModel
 
 enum class Pantallas(@StringRes val titulo: Int) {
     Perfil(titulo = R.string.pantalla_perfil),
@@ -54,9 +47,12 @@ val listaRutas = listOf(
 
 @Composable
 fun ProyectoRubenApp(
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    authViewModel: AuthViewModel
 ) {
     var selectedItem by remember { mutableIntStateOf(0) }
+    val clienteId by authViewModel.clienteId.collectAsState(initial = 1)
+    val clienteNombre by authViewModel.clienteNombre.collectAsState(initial = "")
 
     Scaffold(
         bottomBar = {
@@ -95,20 +91,27 @@ fun ProyectoRubenApp(
             }
         }
     ) { innerPadding ->
-
         NavHost(
             navController = navController,
             startDestination = Pantallas.Perfil.name,
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(route = Pantallas.Perfil.name) {
-                Perfil(modifier = Modifier.fillMaxSize())
+                Perfil(
+                    modifier = Modifier.fillMaxSize(),
+                    authViewModel = authViewModel
+                )
             }
             composable(route = Pantallas.Reservar.name) {
                 Reservar(modifier = Modifier.fillMaxSize())
             }
             composable(route = Pantallas.ListarReservas.name) {
-                ListarReservar(modifier = Modifier.fillMaxSize())
+                val historialViewModel: HistorialViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+                ListarReservar(
+                    modifier = Modifier.fillMaxSize(),
+                    viewModel = historialViewModel,
+                    clienteId = clienteId ?: 1
+                )
             }
             composable(route = Pantallas.Catalogo.name) {
                 Catalogo(modifier = Modifier.fillMaxSize())

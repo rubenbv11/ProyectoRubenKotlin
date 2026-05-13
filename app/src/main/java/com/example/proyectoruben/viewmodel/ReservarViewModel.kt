@@ -2,6 +2,7 @@ package com.example.proyectoruben.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.proyectoruben.modelo.ReservaRequest
 import com.example.proyectoruben.modelo.ServicioDto
 import com.example.proyectoruben.red.RetrofitClient
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,24 +15,54 @@ sealed class ServiciosUiState {
     data class Error(val mensaje: String) : ServiciosUiState()
 }
 
+sealed class ReservaUiState {
+    object Idle : ReservaUiState()
+    object Enviando : ReservaUiState()
+    data class Exito(val mensaje: String) : ReservaUiState()
+    data class Error(val mensaje: String) : ReservaUiState()
+}
+
 class ReservarViewModel : ViewModel() {
 
-    private val _uiState = MutableStateFlow<ServiciosUiState>(ServiciosUiState.Cargando)
-    val uiState: StateFlow<ServiciosUiState> = _uiState
+    private val _serviciosState = MutableStateFlow<ServiciosUiState>(ServiciosUiState.Cargando)
+    val uiState: StateFlow<ServiciosUiState> = _serviciosState
 
-    init {
-        cargarServicios()
-    }
+    private val _reservaState = MutableStateFlow<ReservaUiState>(ReservaUiState.Idle)
+    val reservaState: StateFlow<ReservaUiState> = _reservaState
+
+    init { cargarServicios() }
 
     fun cargarServicios() {
         viewModelScope.launch {
-            _uiState.value = ServiciosUiState.Cargando
+            _serviciosState.value = ServiciosUiState.Cargando
             try {
                 val servicios = RetrofitClient.apiService.getServicios()
-                _uiState.value = ServiciosUiState.Exito(servicios)
+                _serviciosState.value = ServiciosUiState.Exito(servicios)
             } catch (e: Exception) {
-                _uiState.value = ServiciosUiState.Error("Error: ${e.message}")
+                _serviciosState.value = ServiciosUiState.Error("Error: ${e.message}")
             }
         }
+    }
+
+    fun confirmarReserva(servicioId: Int, fecha: String, hora: String) {
+        viewModelScope.launch {
+            _reservaState.value = ReservaUiState.Enviando
+            try {
+                val response = RetrofitClient.apiService.crearReserva(
+                    ReservaRequest(
+                        servicioId = servicioId,
+                        fecha = fecha,
+                        hora = hora
+                    )
+                )
+                _reservaState.value = ReservaUiState.Exito(response.mensaje)
+            } catch (e: Exception) {
+                _reservaState.value = ReservaUiState.Error("Error al reservar: ${e.message}")
+            }
+        }
+    }
+
+    fun resetReservaState() {
+        _reservaState.value = ReservaUiState.Idle
     }
 }
