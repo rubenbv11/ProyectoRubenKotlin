@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -32,25 +33,19 @@ import java.time.temporal.ChronoUnit
 fun ListarReservar(
     modifier: Modifier = Modifier,
     viewModel: HistorialViewModel = viewModel(),
-    clienteId: Int = 1
+    clienteId: Int,
+    onHacerReserva: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val cancelando by viewModel.cancelando.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("Próximas", "Historial")
-
-    // Modal de detalle
     var reservaSeleccionada by remember { mutableStateOf<ReservaHistorialDto?>(null) }
-    // Confirmación de cancelar
     var reservaACancelar by remember { mutableStateOf<ReservaHistorialDto?>(null) }
-    // Snackbar
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(clienteId) {
-        viewModel.cargarReservas(clienteId)
-    }
+    LaunchedEffect(clienteId) { viewModel.cargarReservas(clienteId) }
 
-    // Diálogo de detalle
     reservaSeleccionada?.let { reserva ->
         DetalleReservaDialog(
             reserva = reserva,
@@ -62,7 +57,6 @@ fun ListarReservar(
         )
     }
 
-    // Diálogo de confirmación de cancelación
     reservaACancelar?.let { reserva ->
         AlertDialog(
             onDismissRequest = { reservaACancelar = null },
@@ -83,9 +77,7 @@ fun ListarReservar(
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error
                     )
-                ) {
-                    Text("Sí, cancelar")
-                }
+                ) { Text("Sí, cancelar") }
             },
             dismissButton = {
                 OutlinedButton(onClick = { reservaACancelar = null }) {
@@ -95,9 +87,7 @@ fun ListarReservar(
         )
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { padding ->
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
         Column(modifier = modifier.fillMaxSize().padding(padding)) {
 
             // ── Cabecera ─────────────────────────────────────────────────────
@@ -106,22 +96,17 @@ fun ListarReservar(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        "Mis Reservas",
+                    Text("Mis Reservas",
                         style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                        fontWeight = FontWeight.Bold)
                     when (val s = uiState) {
                         is HistorialUiState.Exito -> Text(
                             "${s.reservas.size} reservas encontradas",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        else -> Text(
-                            "Cargando...",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        else -> Text("Cargando...",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -137,11 +122,9 @@ fun ListarReservar(
                         selected = selectedTab == index,
                         onClick = { selectedTab = index },
                         text = {
-                            Text(
-                                title,
+                            Text(title,
                                 fontWeight = if (selectedTab == index)
-                                    FontWeight.SemiBold else FontWeight.Normal
-                            )
+                                    FontWeight.SemiBold else FontWeight.Normal)
                         }
                     )
                 }
@@ -150,20 +133,23 @@ fun ListarReservar(
             // ── Contenido ────────────────────────────────────────────────────
             when (val state = uiState) {
                 is HistorialUiState.Cargando -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.secondary)
                             Spacer(modifier = Modifier.height(12.dp))
                             Text("Cargando reservas...",
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
-
                 is HistorialUiState.Error -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(state.mensaje, color = MaterialTheme.colorScheme.error)
+                            Text(state.mensaje,
+                                color = MaterialTheme.colorScheme.error)
                             Spacer(modifier = Modifier.height(12.dp))
                             OutlinedButton(onClick = { viewModel.cargarReservas() }) {
                                 Icon(Icons.Default.Refresh, contentDescription = null)
@@ -173,7 +159,6 @@ fun ListarReservar(
                         }
                     }
                 }
-
                 is HistorialUiState.Exito -> {
                     val proximas = state.reservas
                         .filter { it.estado == "Pendiente" || it.estado == "Confirmada" }
@@ -189,17 +174,45 @@ fun ListarReservar(
                         modifier = Modifier.fillMaxSize()
                     ) {
                         if (listaActual.isEmpty()) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(Icons.Default.DateRange, contentDescription = null,
-                                        modifier = Modifier.size(48.dp),
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    Text("No hay reservas aquí",
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Box(modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.padding(32.dp)
+                                ) {
+                                    Text(
+                                        text = if (selectedTab == 0) "✂️" else "📋",
+                                        style = MaterialTheme.typography.displayMedium
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text(
+                                        text = if (selectedTab == 0)
+                                            "¡Aún no tienes citas próximas!"
+                                        else "No hay reservas en el historial",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = if (selectedTab == 0)
+                                            "Reserva tu próxima cita y\nte esperamos con los brazos abiertos"
+                                        else "Tus reservas completadas\naparecerán aquí",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = TextAlign.Center,
+                                        lineHeight = 20.sp
+                                    )
+                                    if (selectedTab == 0) {
+                                        Spacer(modifier = Modifier.height(24.dp))
+                                        Button(
+                                            onClick = onHacerReserva,
+                                            shape = RoundedCornerShape(12.dp)
+                                        ) {
+                                            Text("Hacer una reserva",
+                                                fontWeight = FontWeight.SemiBold)
+                                        }
+                                    }
                                 }
                             }
                         } else {
@@ -239,17 +252,12 @@ fun SwipeToCancel(
     enabled: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    if (!enabled) {
-        content()
-        return
-    }
+    if (!enabled) { content(); return }
 
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
-            if (value == SwipeToDismissBoxValue.EndToStart) {
-                onCancel()
-            }
-            false // No dismisseamos — solo disparamos el callback
+            if (value == SwipeToDismissBoxValue.EndToStart) onCancel()
+            false
         }
     )
 
@@ -259,7 +267,8 @@ fun SwipeToCancel(
         enableDismissFromEndToStart = true,
         backgroundContent = {
             val color by animateColorAsState(
-                targetValue = if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart)
+                targetValue = if (dismissState.dismissDirection ==
+                    SwipeToDismissBoxValue.EndToStart)
                     MaterialTheme.colorScheme.error
                 else Color.Transparent,
                 label = "swipe_color"
@@ -273,25 +282,15 @@ fun SwipeToCancel(
             ) {
                 if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            Icons.Default.Cancel,
-                            contentDescription = "Cancelar",
-                            tint = Color.White,
-                            modifier = Modifier.size(28.dp)
-                        )
-                        Text(
-                            "Cancelar",
-                            color = Color.White,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        Icon(Icons.Default.Cancel, contentDescription = "Cancelar",
+                            tint = Color.White, modifier = Modifier.size(28.dp))
+                        Text("Cancelar", color = Color.White,
+                            fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
         }
-    ) {
-        content()
-    }
+    ) { content() }
 }
 
 // ── Modal de detalle ─────────────────────────────────────────────────────────
@@ -312,77 +311,57 @@ fun DetalleReservaDialog(
         else         -> Pair(Color.Gray, Color(0xFFF5F5F5))
     }
 
-    // Días restantes
     val diasRestantes = try {
         val fecha = LocalDate.parse(reserva.fecha)
-        val hoy = LocalDate.now()
-        ChronoUnit.DAYS.between(hoy, fecha)
+        ChronoUnit.DAYS.between(LocalDate.now(), fecha)
     } catch (e: Exception) { null }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            )
+                containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
-
-                // Cabecera
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.Top
                 ) {
-                    Text(
-                        reserva.nombreServicio,
+                    Text(reserva.nombreServicio,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.weight(1f)
-                    )
+                        modifier = Modifier.weight(1f))
                     Surface(color = statusBg, shape = RoundedCornerShape(6.dp)) {
-                        Text(
-                            reserva.estado,
+                        Text(reserva.estado,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.SemiBold,
-                            color = statusColor
-                        )
+                            color = statusColor)
                     }
                 }
-
                 Spacer(modifier = Modifier.height(16.dp))
                 HorizontalDivider()
                 Spacer(modifier = Modifier.height(16.dp))
-
-                // Detalles
                 DetalleRow("📅 Fecha", fechaFormateada)
                 Spacer(modifier = Modifier.height(8.dp))
                 DetalleRow("🕐 Hora", reserva.hora)
-
-                // Días restantes
                 if (diasRestantes != null && puedeCancelar) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    val textoFecha = when {
+                    DetalleRow("⏳ Cuándo", when {
                         diasRestantes == 0L -> "¡Es hoy!"
                         diasRestantes == 1L -> "¡Mañana!"
                         diasRestantes > 0   -> "En $diasRestantes días"
                         else               -> "Fecha pasada"
-                    }
-                    DetalleRow("⏳ Cuándo", textoFecha)
+                    })
                 }
-
-                // Observaciones
                 reserva.observaciones?.let {
                     if (it.isNotBlank()) {
                         Spacer(modifier = Modifier.height(8.dp))
                         DetalleRow("📝 Notas", it)
                     }
                 }
-
                 Spacer(modifier = Modifier.height(20.dp))
-
-                // Botones
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -392,16 +371,10 @@ fun DetalleReservaDialog(
                             onClick = onCancelar,
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = MaterialTheme.colorScheme.error
-                            )
-                        ) {
-                            Text("Cancelar reserva")
-                        }
+                                contentColor = MaterialTheme.colorScheme.error)
+                        ) { Text("Cancelar reserva") }
                     }
-                    Button(
-                        onClick = onDismiss,
-                        modifier = Modifier.weight(1f)
-                    ) {
+                    Button(onClick = onDismiss, modifier = Modifier.weight(1f)) {
                         Text("Cerrar")
                     }
                 }
@@ -412,21 +385,13 @@ fun DetalleReservaDialog(
 
 @Composable
 fun DetalleRow(label: String, valor: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            valor,
-            style = MaterialTheme.typography.bodyMedium,
+    Row(modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(label, style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(valor, style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+            color = MaterialTheme.colorScheme.onSurface)
     }
 }
 
@@ -448,11 +413,8 @@ fun ReservaCardReal(
         reserva.fecha.split("-").reversed().joinToString("/")
     } catch (e: Exception) { reserva.fecha }
 
-    // Días restantes para próximas
     val diasRestantes = try {
-        val fecha = LocalDate.parse(reserva.fecha)
-        val hoy = LocalDate.now()
-        val dias = ChronoUnit.DAYS.between(hoy, fecha)
+        val dias = ChronoUnit.DAYS.between(LocalDate.now(), LocalDate.parse(reserva.fecha))
         if (dias >= 0) dias else null
     } catch (e: Exception) { null }
 
@@ -461,8 +423,7 @@ fun ReservaCardReal(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+            containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -470,30 +431,22 @@ fun ReservaCardReal(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    reserva.nombreServicio,
+                Text(reserva.nombreServicio,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f),
-                    maxLines = 2
-                )
+                    modifier = Modifier.weight(1f), maxLines = 2)
                 Spacer(modifier = Modifier.width(8.dp))
                 Surface(color = statusBg, shape = RoundedCornerShape(6.dp)) {
-                    Text(
-                        reserva.estado,
+                    Text(reserva.estado,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
-                        color = statusColor,
-                        fontSize = 11.sp
-                    )
+                        color = statusColor, fontSize = 11.sp)
                 }
             }
-
             Spacer(modifier = Modifier.height(8.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Spacer(modifier = Modifier.height(8.dp))
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -517,7 +470,6 @@ fun ReservaCardReal(
                         }
                     }
                 }
-                // Badge de días restantes
                 diasRestantes?.let { dias ->
                     Surface(
                         color = MaterialTheme.colorScheme.secondaryContainer,
@@ -525,8 +477,8 @@ fun ReservaCardReal(
                     ) {
                         Text(
                             text = when (dias) {
-                                0L   -> "Hoy"
-                                1L   -> "Mañana"
+                                0L -> "Hoy"
+                                1L -> "Mañana"
                                 else -> "En $dias días"
                             },
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),

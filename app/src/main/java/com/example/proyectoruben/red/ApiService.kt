@@ -2,6 +2,7 @@ package com.example.proyectoruben.red
 
 import com.example.proyectoruben.modelo.ClienteResponse
 import com.example.proyectoruben.modelo.LoginRequest
+import com.example.proyectoruben.modelo.ProductoDto
 import com.example.proyectoruben.modelo.RegistroRequest
 import com.example.proyectoruben.modelo.ReservaHistorialDto
 import com.example.proyectoruben.modelo.ReservaRequest
@@ -32,4 +33,7 @@ interface ApiService {
 
     @POST("api/auth/registro")
     suspend fun registro(@Body request: RegistroRequest): ClienteResponse
+
+    @GET("api/productos")
+    suspend fun getProductos(): List<ProductoDto>
 }

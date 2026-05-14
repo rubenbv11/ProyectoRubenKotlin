@@ -1,7 +1,7 @@
 <resources>
-    <string name="app_name">ProyectoRuben</string>
+    <string name="app_name">Peluquería Charo</string>
     <string name="pantalla_perfil">Perfil</string>
     <string name="pantalla_reservar">Reservar</string>
-    <string name="pantalla_lista">Historico</string>
-    <string name="pantalla_productos">Catalogo</string>
+    <string name="pantalla_lista">Historial</string>
+    <string name="pantalla_productos">Catálogo</string>
 </resources>

@@ -1,12 +1,15 @@
 package com.example.proyectoruben.ui
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.outlined.DateRange
@@ -39,10 +42,14 @@ enum class Pantallas(@StringRes val titulo: Int) {
 }
 
 val listaRutas = listOf(
-    Ruta(Pantallas.Perfil.titulo, Pantallas.Perfil.name, Icons.Filled.Person, Icons.Outlined.Person),
-    Ruta(Pantallas.Reservar.titulo, Pantallas.Reservar.name, Icons.Filled.Favorite, Icons.Outlined.FavoriteBorder),
-    Ruta(Pantallas.ListarReservas.titulo, Pantallas.ListarReservas.name, Icons.Filled.DateRange, Icons.Outlined.DateRange),
-    Ruta(Pantallas.Catalogo.titulo, Pantallas.Catalogo.name, Icons.Filled.ShoppingCart, Icons.Outlined.ShoppingCart)
+    Ruta(Pantallas.Perfil.titulo, Pantallas.Perfil.name,
+        Icons.Filled.Person, Icons.Outlined.Person),
+    Ruta(Pantallas.Reservar.titulo, Pantallas.Reservar.name,
+        Icons.Filled.Favorite, Icons.Outlined.FavoriteBorder),
+    Ruta(Pantallas.ListarReservas.titulo, Pantallas.ListarReservas.name,
+        Icons.Filled.DateRange, Icons.Outlined.DateRange),
+    Ruta(Pantallas.Catalogo.titulo, Pantallas.Catalogo.name,
+        Icons.Filled.ShoppingCart, Icons.Outlined.ShoppingCart)
 )
 
 @Composable
@@ -52,7 +59,6 @@ fun ProyectoRubenApp(
 ) {
     var selectedItem by remember { mutableIntStateOf(0) }
     val clienteId by authViewModel.clienteId.collectAsState(initial = 1)
-    val clienteNombre by authViewModel.clienteNombre.collectAsState(initial = "")
 
     Scaffold(
         bottomBar = {
@@ -65,7 +71,8 @@ fun ProyectoRubenApp(
                     NavigationBarItem(
                         icon = {
                             Icon(
-                                imageVector = if (selectedItem == indice) ruta.iconoLleno else ruta.iconoVacio,
+                                imageVector = if (selectedItem == indice)
+                                    ruta.iconoLleno else ruta.iconoVacio,
                                 contentDescription = stringResource(id = ruta.nombre)
                             )
                         },
@@ -81,7 +88,9 @@ fun ProyectoRubenApp(
                         onClick = {
                             selectedItem = indice
                             navController.navigate(ruta.ruta) {
-                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                popUpTo(navController.graph.startDestinationId) {
+                                    saveState = true
+                                }
                                 launchSingleTop = true
                                 restoreState = true
                             }
@@ -94,7 +103,19 @@ fun ProyectoRubenApp(
         NavHost(
             navController = navController,
             startDestination = Pantallas.Perfil.name,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
+            enterTransition = {
+                slideInHorizontally(initialOffsetX = { it }) + fadeIn()
+            },
+            exitTransition = {
+                slideOutHorizontally(targetOffsetX = { -it }) + fadeOut()
+            },
+            popEnterTransition = {
+                slideInHorizontally(initialOffsetX = { -it }) + fadeIn()
+            },
+            popExitTransition = {
+                slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
+            }
         ) {
             composable(route = Pantallas.Perfil.name) {
                 Perfil(
@@ -103,10 +124,14 @@ fun ProyectoRubenApp(
                 )
             }
             composable(route = Pantallas.Reservar.name) {
-                Reservar(modifier = Modifier.fillMaxSize())
+                Reservar(
+                    modifier = Modifier.fillMaxSize(),
+                    clienteId = clienteId ?: 1
+                )
             }
             composable(route = Pantallas.ListarReservas.name) {
-                val historialViewModel: HistorialViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+                val historialViewModel: HistorialViewModel =
+                    androidx.lifecycle.viewmodel.compose.viewModel()
                 ListarReservar(
                     modifier = Modifier.fillMaxSize(),
                     viewModel = historialViewModel,
@@ -115,6 +140,23 @@ fun ProyectoRubenApp(
             }
             composable(route = Pantallas.Catalogo.name) {
                 Catalogo(modifier = Modifier.fillMaxSize())
+            }
+            composable(route = Pantallas.ListarReservas.name) {
+                val historialViewModel: HistorialViewModel =
+                    androidx.lifecycle.viewmodel.compose.viewModel()
+                ListarReservar(
+                    modifier = Modifier.fillMaxSize(),
+                    viewModel = historialViewModel,
+                    clienteId = clienteId ?: 1,
+                    onHacerReserva = {
+                        selectedItem = 1  // índice de Reservar en listaRutas
+                        navController.navigate(Pantallas.Reservar.name) {
+                            popUpTo(navController.graph.startDestinationId) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                )
             }
         }
     }

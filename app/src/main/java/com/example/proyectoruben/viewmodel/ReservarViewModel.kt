@@ -44,12 +44,13 @@ class ReservarViewModel : ViewModel() {
         }
     }
 
-    fun confirmarReserva(servicioId: Int, fecha: String, hora: String) {
+    fun confirmarReserva(servicioId: Int, fecha: String, hora: String, clienteId: Int) {
         viewModelScope.launch {
             _reservaState.value = ReservaUiState.Enviando
             try {
                 val response = RetrofitClient.apiService.crearReserva(
                     ReservaRequest(
+                        clienteId = clienteId,
                         servicioId = servicioId,
                         fecha = fecha,
                         hora = hora
