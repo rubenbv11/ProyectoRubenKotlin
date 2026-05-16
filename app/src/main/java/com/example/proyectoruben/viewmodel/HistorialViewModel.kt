@@ -16,15 +16,15 @@ sealed class HistorialUiState {
 
 class HistorialViewModel : ViewModel() {
 
+    private var _ultimoClienteId: Int? = null
     private val _uiState = MutableStateFlow<HistorialUiState>(HistorialUiState.Cargando)
     val uiState: StateFlow<HistorialUiState> = _uiState
 
     private val _cancelando = MutableStateFlow(false)
     val cancelando: StateFlow<Boolean> = _cancelando
 
-    init { cargarReservas() }
-
-    fun cargarReservas(clienteId: Int = 1) {
+    fun cargarReservas(clienteId: Int) {
+        _ultimoClienteId = clienteId
         viewModelScope.launch {
             _uiState.value = HistorialUiState.Cargando
             try {
@@ -41,7 +41,7 @@ class HistorialViewModel : ViewModel() {
             _cancelando.value = true
             try {
                 RetrofitClient.apiService.cancelarReserva(id)
-                cargarReservas()
+                _ultimoClienteId?.let { cargarReservas(it) }
                 onExito()
             } catch (e: Exception) {
                 onError("No se pudo cancelar: ${e.message}")

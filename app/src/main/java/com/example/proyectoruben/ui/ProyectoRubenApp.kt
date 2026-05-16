@@ -129,15 +129,6 @@ fun ProyectoRubenApp(
                     clienteId = clienteId ?: 1
                 )
             }
-            composable(route = Pantallas.ListarReservas.name) {
-                val historialViewModel: HistorialViewModel =
-                    androidx.lifecycle.viewmodel.compose.viewModel()
-                ListarReservar(
-                    modifier = Modifier.fillMaxSize(),
-                    viewModel = historialViewModel,
-                    clienteId = clienteId ?: 1
-                )
-            }
             composable(route = Pantallas.Catalogo.name) {
                 Catalogo(modifier = Modifier.fillMaxSize())
             }
